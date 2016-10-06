@@ -1,0 +1,61 @@
+"use strict";
+
+let play = {};//require("server-play")
+
+/*
+Modes/Lifecycle of a player:
+Registering (Give your name, synch timestamps)
+=> Preparing (Spawn location decided, etc, preparations made by server)
+=> Playing (Player is playing right now)
+=> Dead (Player has died, and camera is lingering)
+=> Preparing
+*/
+
+{
+	const nameCheck = /^[a-z_0-9]{1, 10}$/i
+	// const messageHandlerTable = {}
+	// messageHandlerTable.TIME_SYNCH = function(message, ws)
+	// {
+	// 	let ret = false
+	// 	let temp = Date.now - this.ping_start
+	// 	if (temp < this.minPing)
+	// 		this.minPing = temp;
+	// 	else if (this.pingAttempts == 10)
+	// 		ret = messageHandlerTable.PREPARING
+	// 	this.pingAttempts++;
+	// 	return ret
+
+	// }
+	// messageHandlerTable.NAMING = function(message, ws) {
+	// 	if (nameCheck.test(message))
+	// 		this.name = message;
+	// 	return messageHandlerTable.TIME_SYNCH;
+	// }
+
+	const PlayerTable = new Map(); //WebSocket => Player Details
+	//PlayerTable is sent to other modules as context, and is thus const.
+
+	let messageHandler = function(message)
+	{
+		let details = PlayerTable.get(this)
+		//let temp = details.onMessage(message.data, this)
+		//if(temp)
+		//	this.onMessage = temp;
+		details.onMessage.next(message)
+	}
+	let connectPlayer = function(ws)
+	{
+		let FSM = PlayerFSM();
+		let details = { name : "1337H4X", onMessage : FSM}; //messageHandlerTable.NAMING}
+		PlayerTable.set(ws, details)
+		FSM.next();
+		FSM.next(details, ws)
+		ws.on("message", messageHandler)
+	}
+	let main = function()
+	{
+		play.main({PlayerTable : PlayerTable});
+		exports.connectPlayer = connectPlayer; //Start accepting connections
+	}
+	exports.main = main;
+}
