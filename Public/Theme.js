@@ -15,6 +15,7 @@ var Theme;
 		ctx.strokeStyle = "#FFFF00"
 		for (const keyval of visible.players) {
 			const player = keyval[1]
+			console.log(keyval)
 			if (player.id == player.myId)
 				ctx.fillStyle = "#227722";
 			else if (player.hunted)
@@ -25,7 +26,8 @@ var Theme;
 			// console.log(player.id == player.myId, player.hunted)
 			ctx.arc(player.x, player.y, player.radius, 0, 100)
 			ctx.closePath()
-			ctx.fill()	
+			ctx.fill()
+			ctx.fillText(player.name, player.x-player.radius, player.y-5-player.radius);
 		}
 	}
 	//The renderer to use:

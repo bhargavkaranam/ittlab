@@ -8,10 +8,13 @@ var Player
 	let cos = Math.cos
 
 	//Player class
-	Player = function(id, x, y, dir, stamp)
+	Player = function(id, x, y, dir, stamp, name)
 	{
 		this.direction = dir;
 		this.id = id;
+		this.x = x
+		this.name = name
+		this.y = y
 		this.stamps = [x, x]
 		this.xs = [y, y]
 		this.ys = [stamp-50, stamp]
@@ -20,7 +23,7 @@ var Player
 	}
 	let proto = Player.prototype
 	proto.myId = 0
-	proto.radius = 50
+	proto.radius = 20
 	proto.speed = 0.2
 	proto.getRelation = function(id1, id2) //True <=> id1 hunts id2
 	{

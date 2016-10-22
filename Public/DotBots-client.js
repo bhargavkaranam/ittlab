@@ -1,6 +1,8 @@
 "use strict";
 
+
 {
+	let URL = "ws://localhost:3000/DotBots"
 	var ws;
 
 	const PlayerFSM = function* ()
@@ -9,7 +11,7 @@
 		const FSMcall = FSM.next.bind(FSM, FSM);
 		{	//Get name
 			let name = prompt("Enter name: ")
-			while (yield != 0) //Input name
+			while ((yield) != 0) //Input name
 		 	{
 	 			name = prompt("Enter another name: ")
 		 	}
@@ -95,10 +97,10 @@
 			//This dl,dq should theoretically provide more resolution than dx,dy, since dxdy can contain invalid info
 		}
 	}
-
+	var curTime = Date.now();
 	function main()
 	{
-		ws = new WebSocket("ws://122.178.217.77:3000/DotBots")
+		ws = new WebSocket(URL)
 		ws.onopen = function()
 		{
 			console.log("WS Connected")
@@ -110,22 +112,65 @@
 		}	
 		
 
-		// let canvas = document.createElement("canvas")
-		// canvas.height = 400
-		// canvas.width = 600
-		// document.body.appendChild(canvas)
-		// let theme = new Theme(canvas)
-		// let visible = new Visible()
-		// visible.players.set(0, new Player(0, 200, 200, 3, curTime))
-		// visible.players.set(1, new Player(1, 60, 110, 4, curTime))
-		// visible.players.set(2, new Player(2, 110, 210, 4, curTime))
-		// function renderLoop()
-		// {
-		// 	curTime = Date.now();
-		// 	theme.simplerender(visible)
-		// 	window.requestAnimationFrame(renderLoop)
-		// }
-		// window.requestAnimationFrame(renderLoop)
+		let canvas = document.createElement("canvas")
+		canvas.height = 400
+		canvas.width = 600
+		document.body.appendChild(canvas)
+		let theme = new Theme(canvas)
+		let visible = new Visible()
+		let localplayer //new Player(0, Math.random()*300, Math.random()*300, 3, curTime)
+		//let p2 = new Player(1, 60, 110, 4, curTime)
+		//visible.players.set(0, localplayer)
+
+		let kek = function(e)
+		{
+			e = e.data
+			let name = e.split(":")[4]
+			e = e.split(":").map(Number)
+			if (visible.players.get(e[1]))
+			{
+				let p = visible.players.get(e[1])
+				//console.log(p)
+				p.x = e[2]
+				p.y = e[3]
+			}
+			else
+				visible.players.set(e[1], new Player(e[1], e[2], e[3], 0, curTime, name))
+		}
+
+		//visible.players.set(1, p2)
+		let speed = 5
+		window.mousex =  0
+		window.mousey = 0
+		let lastTime = Date.now()
+		//visible.players.set(2, new Player(2, 110, 210, 4, curTime))
+		function renderLoop()
+		{
+			curTime = Date.now();
+			theme.simplerender(visible)
+			localplayer.x += Math.min(Math.max(window.mousex - localplayer.x, -speed), speed)
+			localplayer.y += Math.min(Math.max(window.mousey - localplayer.y, -speed), speed)
+			if (curTime - lastTime > 40)
+			{
+				lastTime = curTime
+				ws.send(localplayer.id.toString()+":"+localplayer.x.toString()+":"+localplayer.y.toString()+":"+localplayer.name.toString())
+			}
+			window.requestAnimationFrame(renderLoop)
+		}
+		ws.onmessage = function(e)
+		{
+			let localname = window.prompt("Please enter your name: ")
+			let id = Number(e.data)
+			localplayer = new Player(id, Math.random()*300, Math.random()*300, 3, curTime, localname)
+			visible.players.set(id, localplayer)
+			ws.onmessage = kek
+			window.requestAnimationFrame(renderLoop)
+		}
 	}
 	window.onload = main
+	window.onmousemove = function(event)
+	{
+		window.mousex = event.clientX
+		window.mousey = event.clientY
+	}
 }
