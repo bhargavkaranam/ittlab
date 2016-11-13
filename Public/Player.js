@@ -2,6 +2,13 @@
 
 let IS_NODE = typeof window === 'undefined'
 
+let vars;
+
+if (IS_NODE)
+	vars = require(vars.js)
+else
+	vars = window.vars
+
 var Player
 {
 	let sin = Math.sin
@@ -40,7 +47,7 @@ var Player
 		stamps[1] = stamps[2]
 		stamps[2] = stamp;
 	};
-
-	if(IS_NODE)
-		module.exports = Player
 }
+
+if(IS_NODE)
+	module.exports = Player

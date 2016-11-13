@@ -8,33 +8,43 @@
 		const [player, ws, FSM] = yield;
 		const FSMcall = FSM.next.bind(FSM, FSM);
 		{	//Get name
+			ws.send("FSM:getName")
 			let name = prompt("Enter name: ")
-			while (yield != 0) //Input name
+			while ((yield) != 0) //Input name
 		 	{
 	 			name = prompt("Enter another name: ")
 		 	}
 		}
 		{	//Synch timestamps
-	 		let min = 9999;
+	 		let min = 9999; //a 10 second max lag is a very reasonable assumption.
+	 		let minstart = 0
+	 		let minnum = -1
 	 		const id = new Buffer([0])
 	 		const pongHandler = (data) => { if(data[0]===id[0]) FSMcall() }
 	 		ws.on("pong", pongHandler)
 		 		
 	 		for(let i=0; i<10; i++)
 	 		{
-		 		let lag = Date.now()
-		 		id[0] = Math.floor(Math.random()*256);
+		 		id[0] = Math.floor(Math.random()*256)
+		 		let start = Date.now()
 		 		ws.ping(id)
 		 		//We need to have a mechanism so yield's source is trusted.
 		 		//This mechanism is making FSMcall created yields return the FSM
+		 		//In the future we will have async/await to deal with this stuff
+		 		//TODO: Change the generator mechanism to use asynch/await with nodejs7
 		 		assert(FSM === (yield)); //Wait for pong to callback
-		 		lag = Date.now() - lag;
+		 		let lag = Date.now() - start;
 	 			dbglog("Detected lag of: ", lag); //DEBUG:
 	 			if(lag < min)
+	 			{
 	 				min = lag;
+	 				minstart = start;
+	 				minnum = i;
+	 			}
 		 	}
 		 	ws.removeListener("pong", pongHandler)
 		 	dbglog("Minimum latency: ", min)
+		 	ws.send([i, minstart+min/2])	
 		 	//min is the time it takes to send a message to the client
 		}
 	}
@@ -95,37 +105,37 @@
 			//This dl,dq should theoretically provide more resolution than dx,dy, since dxdy can contain invalid info
 		}
 	}
-
+	var curTime = Date.now();
 	function main()
 	{
-		ws = new WebSocket("ws://122.178.217.77:3000/DotBots")
-		ws.onopen = function()
-		{
-			console.log("WS Connected")
+		// ws = new WebSocket("ws://122.178.217.77:3000/DotBots")
+		// ws.onopen = function()
+		// {
+		// 	console.log("WS Connected")
 
-		}
-		ws.onerror = function()
-		{
-			document.body.innerHTML = "Sorry, could not establish WebSocket connection"	
-		}	
+		// }
+		// ws.onerror = function()
+		// {
+		// 	document.body.innerHTML = "Sorry, could not establish WebSocket connection"	
+		// }	
 		
 
-		// let canvas = document.createElement("canvas")
-		// canvas.height = 400
-		// canvas.width = 600
-		// document.body.appendChild(canvas)
-		// let theme = new Theme(canvas)
-		// let visible = new Visible()
-		// visible.players.set(0, new Player(0, 200, 200, 3, curTime))
-		// visible.players.set(1, new Player(1, 60, 110, 4, curTime))
-		// visible.players.set(2, new Player(2, 110, 210, 4, curTime))
-		// function renderLoop()
-		// {
-		// 	curTime = Date.now();
-		// 	theme.simplerender(visible)
-		// 	window.requestAnimationFrame(renderLoop)
-		// }
-		// window.requestAnimationFrame(renderLoop)
+		let canvas = document.createElement("canvas")
+		canvas.height = 400
+		canvas.width = 600
+		document.body.appendChild(canvas)
+		let theme = new Theme(canvas)
+		let visible = new Visible()
+		visible.players.set(0, new Player(0, 200, 200, 3, curTime))
+		visible.players.set(1, new Player(1, 60, 110, 4, curTime))
+		visible.players.set(2, new Player(2, 110, 210, 4, curTime))
+		function renderLoop()
+		{
+			curTime = Date.now();
+			theme.simplerender(visible)
+			window.requestAnimationFrame(renderLoop)
+		}
+		window.requestAnimationFrame(renderLoop)
 	}
 	window.onload = main
 }

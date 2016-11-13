@@ -1,9 +1,12 @@
 "use strict";
 
+var 
+
 const assert = function(val, mess)
 {
 	if (!val)
-		(null).assertionFailed = 0
+		(null).assertionFailed = 0 //HAXXX
+	//TODO: When you have internet, check how to stacktrace
 }
 
 let play = {main : ()=>null };//require("server-play")
@@ -28,6 +31,7 @@ Registering (Give your name, synch timestamps)
 	{
 		const [player, ws, FSM] = yield; //Bind to these variables, given on connection
 		const FSMcall = FSM.next.bind(FSM, FSM);
+		assert(yield == "FSM:getName")
 		{	//Get name
 			let name = yield
 			while (NamePool.has(name) || !nameCheck.test(name)) //Input name
@@ -39,8 +43,11 @@ Registering (Give your name, synch timestamps)
 	 		player.name = name;
 	 		ws.send(0)
 		}
+		assert(yield == "FSM:ts")
 	 	{	//Synch timestamps
-	 		let min = 9999;
+	 		let min = 9999; //a 10 second max lag is a very reasonable assumption.
+	 		let minstart = 0
+	 		let minnum = -1
 	 		const id = new Buffer([0])
 	 		const pongHandler = (data) => { if(data[0]===id[0]) FSMcall() }
 	 		ws.on("pong", pongHandler)
@@ -52,11 +59,15 @@ Registering (Give your name, synch timestamps)
 		 		ws.ping(id)
 		 		//We need to have a mechanism so yield's source is trusted.
 		 		//This mechanism is making FSMcall created yields return the FSM
+		 		//In the future we will have async/await to deal with this stuff
+		 		//TODO: Change the generator mechanism to use asynch/await with nodejs7
 		 		assert(FSM === (yield)); //Wait for pong to callback
 		 		lag = Date.now() - lag;
 	 			dbglog("Detected lag of: ", lag); //DEBUG:
 	 			if(lag < min)
 	 				min = lag;
+	 				minstart = start;
+	 				minnum = i;
 		 	}
 		 	ws.removeListener("pong", pongHandler)
 		 	dbglog("Minimum latency: ", min)
