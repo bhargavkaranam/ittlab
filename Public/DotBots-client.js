@@ -4,7 +4,7 @@
 {
 	let URL = "ws://localhost:3000/DotBots"
 	var ws;
-
+	let visibleGlobal
 	const PlayerFSM = function* ()
 	{
 		const [player, ws, FSM] = yield;
@@ -113,8 +113,8 @@
 		
 
 		let canvas = document.createElement("canvas")
-		canvas.height = 400
-		canvas.width = 600
+		canvas.height = 2000
+		canvas.width = 2000
 		document.body.appendChild(canvas)
 		let theme = new Theme(canvas)
 		let visible = new Visible()
@@ -136,6 +136,7 @@
 			}
 			else
 				visible.players.set(e[1], new Player(e[1], e[2], e[3], 0, curTime, name))
+			visibleGlobal = visible;
 		}
 
 		//visible.players.set(1, p2)
@@ -164,13 +165,16 @@
 			localplayer = new Player(id, Math.random()*300, Math.random()*300, 3, curTime, localname)
 			visible.players.set(id, localplayer)
 			ws.onmessage = kek
+			visibleGlobal = visible
 			window.requestAnimationFrame(renderLoop)
 		}
 	}
 	window.onload = main
 	window.onmousemove = function(event)
 	{
+
 		window.mousex = event.clientX
 		window.mousey = event.clientY
 	}
+	
 }

@@ -11,10 +11,12 @@ written in their own consistent standard.
 //Nodejs stuff
 let game = require("./DotBots-server.js");
 let express = require('express');
+let mysql = require('mysql');
 let app = express();
 let http = require('http').Server(app);
 let WebSocketServer = require('ws').Server;
 let wss = new WebSocketServer({ server: http });
+let database = require('./database');
 
 
 let players = 0;
@@ -29,6 +31,7 @@ function ws_disconnecthandler()
 function hackyMsgHandler(data)
 {
 	//data = data.split(":").map(Number)
+	// addToDatabase()
 	for (let i in plist)
 	{
 		let ws = plist[i]
@@ -43,6 +46,7 @@ function ws_connecthandler(ws)
 	console.log("WS ", ws.upgradeReq.connection.remoteAddress," connected, ", players+1, " clients connected")
 	//game.connectPlayer(ws)
 	ws.send(players.toString())
+	
 	plist[players] = ws
 	ws.on('close', ws_disconnecthandler);
 	ws.on("message", hackyMsgHandler)
@@ -50,9 +54,11 @@ function ws_connecthandler(ws)
 }
 wss.on('connection', ws_connecthandler);
 
+
 app.get('/DotBots', function(req, res){
   res.sendFile('Public/index.html', {root : "."});
 });
+
 app.use(express.static('Public')); //Makes all contents of Public folder public
 
 http.listen(3000, (function(){game.main()})())

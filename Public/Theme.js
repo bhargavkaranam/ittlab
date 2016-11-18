@@ -15,7 +15,7 @@ var Theme;
 		ctx.strokeStyle = "#FFFF00"
 		for (const keyval of visible.players) {
 			const player = keyval[1]
-			console.log(keyval)
+			// console.log(keyval)
 			if (player.id == player.myId)
 				ctx.fillStyle = "#227722";
 			else if (player.hunted)
