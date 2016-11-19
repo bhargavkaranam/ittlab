@@ -1,0 +1,78 @@
+"use strict";
+
+/*
+I don't fully understand the nodejs way, or how it's supposed to work.
+As such, adhering to the everchanging JS standards is a pain.
+So, all the ugly stuff is in this file, and this file "just works"
+Everything else is abstracted away in the game modules, which are
+written in their own consistent standard.
+*/
+
+//Nodejs stuff
+let game = require("./DotBots-server.js");
+let express = require('express');
+let app = express();
+let http = require('http').Server(app);
+let WebSocketServer = require('ws').Server;
+let wss = new WebSocketServer({ server: http });
+let database = require('./database');
+let ip = require('ip');
+let players = 0;
+let plist = []
+let wslookup = []
+
+function ws_disconnecthandler()
+{
+	players--;
+	plist[wslookup[this]] = null
+	console.log("WS ", this.upgradeReq.connection.remoteAddress," disconnected, ", players, " clients connected")
+}
+
+function hackyMsgHandler(data)
+{
+	//data = data.split(":").map(Number)
+	if(typeof(data) == "string" && data.charAt(0)=="%")
+	{
+		console.log("chat: "+data.substr(1))
+		let details = data.substr(1).split(':')
+
+		database.addChatLog(details[0],ip.address(),details[1])
+	}
+	if(typeof(data) == "string" && data.charAt(0)=="&")
+	{
+		let arr = data.substr(1).split(":")
+		let pname = arr[1]
+		let score = arr[2]
+		database.updateScore(pname,score);
+		console.log("Score of "+pname+" is "+score)
+	}
+	for (let i in plist)
+	{
+		let ws = plist[i]
+		if (ws && ws != this)
+		{
+			ws.send(data)
+		}
+	}
+}
+
+//For every new websocket connection:
+function ws_connecthandler(ws)
+{
+	console.log("WS ", ws.upgradeReq.connection.remoteAddress," connected, ", players+1, " clients connected")
+	//game.connectPlayer(ws)
+	ws.send(players.toString())
+	plist[players] = ws
+	wslookup[ws] = players
+	ws.on('close', ws_disconnecthandler);
+	ws.on("message", hackyMsgHandler)
+	players++;
+}
+wss.on('connection', ws_connecthandler);
+
+app.get('/DotBots', function(req, res){
+  res.sendFile('Public/index.html', {root : "."});
+});
+app.use(express.static('Public')); //Makes all contents of Public folder public
+
+http.listen(3000, (function(){game.main()})())
