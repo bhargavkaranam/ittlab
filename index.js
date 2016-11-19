@@ -59,7 +59,7 @@ function hackyMsgHandler(data)
 //For every new websocket connection:
 function ws_connecthandler(ws)
 {
-	console.log("WS ", ws.upgradeReq.connection.remoteAddress," connected, ", players+1, " clients connected")
+	console.log("WS ", ws.upgradeReq.connection.remoteAddress," connected, ", players+1, " clients are currently connected")
 	//game.connectPlayer(ws)
 	ws.send(players.toString())
 	plist[players] = ws
